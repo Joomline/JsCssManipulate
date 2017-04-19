@@ -1,2 +1,2 @@
-# JsCssManipulate
-Плагин Joomla для манипуляции с Javascript и Stylesheet
+# JsCssManipulate. Плагин Joomla для манипуляции с Javascript и Stylesheet
+Плагин позволяет удалять, перемещать в конец страницы, добавлять атрибуты defer и async скриптам, а так-же удалять или перемещать вниз страницы таблицы стилей.
