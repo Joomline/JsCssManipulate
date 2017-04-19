@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE install>
+<extension version="3.0" type="plugin" group="system" method="upgrade">
+	<name>PLG_SYSTEM_JSCSSMANIPULATE</name>
+	<license>Open Source License, GPL v2 based</license>
+	<author>Arkadiy Sedelnikov</author>
+	<authorEmail>a.sedelnikov@gmail.com</authorEmail>
+	<authorUrl>argens.ru</authorUrl>
+	<creationDate>19-04-2017</creationDate>
+	<copyright>2017 Arkadiy Sedelnikov</copyright>
+	<version>1.0.0</version>
+	<description>PLG_JSCSSMANIPULATE_DESCRIPTION</description>
+	<files>
+		<filename plugin="jscssmanipulate">jscssmanipulate.php</filename>
+		<folder>assets</folder>
+		<folder>language</folder>
+		<folder>elements</folder>
+	</files>
+	<config addfieldpath="/plugins/system/jscssmanipulate/elements">
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+						name="debug"
+						type="radio"
+						default="0"
+						label="PLG_JSCSSMANIPULATE_DEBUG"
+						description="PLG_JSCSSMANIPULATE_DEBUG_DESC"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field
+						name="scripts"
+						type="javascript"
+						label="PLG_JSCSSMANIPULATE_SCRIPTS"
+						description="PLG_JSCSSMANIPULATE_SCRIPTS_DESC"
+				/>
+				<field
+						name="css"
+						type="stylesheet"
+						label="PLG_JSCSSMANIPULATE_CSS"
+						description="PLG_JSCSSMANIPULATE_CSS_DESC"
+				/>
+
+			</fieldset>
+		</fields>
+	</config>
+</extension>
