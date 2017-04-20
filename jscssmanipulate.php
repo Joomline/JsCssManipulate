@@ -27,7 +27,7 @@ class plgSystemJsCssManipulate extends JPlugin
     {
         $app = JFactory::getApplication();
         if ($app->isAdmin()) {
-            return;
+            return true;
         }
 
         $doc = JFactory::getDocument();
@@ -55,14 +55,9 @@ class plgSystemJsCssManipulate extends JPlugin
 
                     $debug && $debugInfo .= '<li>' . $searchUrl . ' ==> ';
 
-                    if (!empty($params->remove)) {
-                        if($this->checkExceptions($params->remove_exceptions)){
-                            $debug && $debugInfo .= '<span class="label label-primary">EXCEPTIONS</span>';
-                        }
-                        else{
-                            $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
-                            unset($doc->_scripts[$searchUrl]);
-                        }
+                    if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
+                        $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
+                        unset($doc->_scripts[$searchUrl]);
                     } else {
                         if (!empty($params->defer)) {
                             $debug && $debugInfo .= '<span class="label label-success">DEFER</span>';
@@ -99,14 +94,9 @@ class plgSystemJsCssManipulate extends JPlugin
 
                     $debug && $debugInfo .= '<li>' . $searchUrl . ' ==> ';
 
-                    if (!empty($params->remove)) {
-                        if($this->checkExceptions($params->remove_exceptions)){
-                            $debug && $debugInfo .= '<span class="label label-primary">EXCEPTIONS</span>';
-                        }
-                        else{
-                            $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
-                            unset($doc->_styleSheets[$searchUrl]);
-                        }
+                    if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
+                        $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
+                        unset($doc->_styleSheets[$searchUrl]);
                     } else if (!empty($params->foother)) {
                         $debug && $debugInfo .= '<span class="label label-danger">MOVED TO FOOTHER</span>';
                         $this->footherCss[$searchUrl] = $doc->_styleSheets[$searchUrl];
@@ -222,8 +212,7 @@ class plgSystemJsCssManipulate extends JPlugin
         return $config;
     }
 
-    private function checkExceptions($removeExceptions){
-        $return = false;
+    private function checkExceptions($removeExceptions, $debug, &$debugInfo){
         $removeExceptions = trim($removeExceptions);
         if(empty($removeExceptions)){
             return false;
@@ -244,6 +233,12 @@ class plgSystemJsCssManipulate extends JPlugin
             $aCheck[] = (int)in_array($input->getString($removeException[0], ''), $values);
         }
 
-        return !in_array(0, $aCheck);
+        $exception = !in_array(0, $aCheck);
+
+        if($exception){
+            $debug && $debugInfo .= '<span class="label label-primary">EXCEPTION</span>';
+        }
+
+        return $exception;
     }
 }
