@@ -1,11 +1,4 @@
 <?php
-/*------------------------------------------------------------------------
-# author    Jeremy Magne
-# copyright Copyright (C) 2010 Daycounts.com. All Rights Reserved.
-# Websites: http://www.daycounts.com
-# Technical Support: http://www.daycounts.com/en/contact/
-# @license - http://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
--------------------------------------------------------------------------*/
 
 defined('JPATH_BASE') or die();
 
@@ -13,8 +6,15 @@ class JFormFieldStylesheet extends JFormField {
 
     public function getInput()	{
 
+        $plugin = JPluginHelper::getPlugin('system', 'jscssmanipulate');
+        $plgParams = new JRegistry($plugin->params);
+        $enableMinify = $plgParams->get('minify',0);
+
         JHtml::_('jquery.framework');
         JFactory::getDocument()->addScript(JUri::root().'plugins/system/jscssmanipulate/assets/js/script.js');
+        JFactory::getDocument()->addScriptDeclaration('
+            var enableCssMinify = '.$enableMinify.';
+        ');
 
         $value  = $this->value;
 
@@ -22,6 +22,9 @@ class JFormFieldStylesheet extends JFormField {
         $html .= '<thead>';
         $html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_STYLESHEET').'</th>';
         $html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_TO_FOOTHER').'</th>';
+        if($enableMinify){
+            $html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_MINIFY').'</th>';
+        }
         $html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_REMOVE').'</th>';
         $html .= '<th></th>';
         $html .= '</thead>';
@@ -35,9 +38,13 @@ class JFormFieldStylesheet extends JFormField {
             foreach ($value as $v){
                 $checkedFoother = (!empty($v['foother'])) ? ' checked' : '';
                 $checkedRemove = (!empty($v['remove'])) ? ' checked' : '';
+                $checkedMinify = (!empty($v['minify'])) ? ' checked' : '';
                 $html .= '<tr>';
                 $html .= '<td align="center"><input style="width: 400px;" type="text" name="'.$this->name.'['.$k.'][path]" value="'.$v['path'].'"></td>';
                 $html .= '<td align="center"><input type="checkbox" name="'.$this->name.'['.$k.'][foother]" value="1"'.$checkedFoother.'></td>';
+                if($enableMinify){
+                    $html .= '<td align="center"><input type="checkbox" name="'.$this->name.'['.$k.'][minify]" value="1"'.$checkedMinify.'></td>';
+                }
                 $html .= '<td align="center"><input type="checkbox" name="'.$this->name.'['.$k.'][remove]" value="1"'.$checkedRemove.'>';
                 $html .= '<input type="text" name="'.$this->name.'['.$k.'][remove_exceptions]" value="'.$v['remove_exceptions'].'"></td>';
                 $html .= '<td align="center"><input type="button" class="btn btn-danger btn-small" value="X" onclick="removeRow(this);"></td>';

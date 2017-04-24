@@ -1,6 +1,7 @@
 <?php
 defined('_JEXEC') or die('Restricted access');
 use Joomla\Utilities\ArrayHelper;
+use MatthiasMullie\Minify;
 
 if (version_compare(JVERSION, '3.5.0', 'ge')) {
     if (!class_exists('StringHelper1')) {
@@ -17,11 +18,21 @@ if (version_compare(JVERSION, '3.5.0', 'ge')) {
         }
     }
 }
+jimport('joomla.filesystem.folder');
 
 class plgSystemJsCssManipulate extends JPlugin
 {
-    private $footherScripts, $footherCss;
+    private $footherScripts, $footherCss, $minifiedPath, $minifiedUrl;
 
+    function __construct($subject, array $config = array())
+    {
+        parent::__construct($subject, $config);
+        $this->minifiedPath = JPATH_ROOT . '/cache/plg_system_jscssmanipulate';
+        $this->minifiedUrl = JUri::root() . 'cache/plg_system_jscssmanipulate';
+        if (!is_dir($this->minifiedPath)) {
+            JFolder::create($this->minifiedPath);
+        }
+    }
 
     function onBeforeCompileHead()
     {
@@ -35,6 +46,13 @@ class plgSystemJsCssManipulate extends JPlugin
         $config = $this->prepareConfig();
 
         $debug = $this->params->get('debug', '0');
+        $minify = $this->params->get('minify', 0);
+        $minifierUrls = array('js' => array(), 'css' => array());
+
+        if ($minify) {
+            require_once __DIR__ . '/lib/minify/includes.php';
+            require_once __DIR__ . '/lib/path-converter/includes.php';
+        }
 
         if ($debug) {
             $lang = JFactory::getLanguage();
@@ -56,7 +74,11 @@ class plgSystemJsCssManipulate extends JPlugin
                     $debug && $debugInfo .= '<li>' . $searchUrl . ' ==> ';
 
                     if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
-                        $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
+                        $debug && $debugInfo .= '<span class="label label-warning">REMOVED</span>';
+                        unset($doc->_scripts[$searchUrl]);
+                    } else if ($minify && $params->minify) {
+                        $minifierUrls['js'][] = $searchUrl;
+                        $debug && $debugInfo .= '<span class="label label-inverse">MINIFIED</span>';
                         unset($doc->_scripts[$searchUrl]);
                     } else {
                         if (!empty($params->defer)) {
@@ -97,6 +119,10 @@ class plgSystemJsCssManipulate extends JPlugin
                     if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
                         $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
                         unset($doc->_styleSheets[$searchUrl]);
+                    } else if ($minify && $params->minify) {
+                        $minifierUrls['css'][] = $searchUrl;
+                        $debug && $debugInfo .= '<span class="label label-inverse">MINIFIED</span>';
+                        unset($doc->_styleSheets[$searchUrl]);
                     } else if (!empty($params->foother)) {
                         $debug && $debugInfo .= '<span class="label label-danger">MOVED TO FOOTHER</span>';
                         $this->footherCss[$searchUrl] = $doc->_styleSheets[$searchUrl];
@@ -111,10 +137,128 @@ class plgSystemJsCssManipulate extends JPlugin
             $debug && $debugInfo .= '</ul>';
         }
 
+        if (count($minifierUrls['js']) || count($minifierUrls['css'])) {
+            $this->prepareMinified($doc, $minifierUrls);
+        }
+
         if ($debug) {
-            $app->enqueueMessage($debugInfo, JText::_('PLG_JSCSSMANIPULATE_JS_DEBUG'));
+            $app->enqueueMessage($debugInfo, JText::_('PLG_JSCSSMANIPULATE_DEBUG'));
         }
         return true;
+    }
+
+    private function prepareMinified(&$doc, $minifierUrls)
+    {
+        $app = JFactory::getApplication();
+        if (count($minifierUrls['js'])) {
+            $filename = md5(implode(',', $minifierUrls['js'])) . '.js';
+            $filePath = $this->minifiedPath . '/' . $filename;
+            $fileUrl = $this->minifiedUrl . '/' . $filename;
+            if (is_file($filePath)) {
+                $this->addMinifiedJs($doc, $fileUrl);
+            } else {
+                $minifier = new Minify\JS();
+                foreach ($minifierUrls['js'] as $url) {
+                    $path = $this->preparePath($url);
+                    if ($path === false) {
+                        $app->enqueueMessage('Error converting url ' . $url . ' to filepath.', 'error');
+                        continue;
+                    }
+                    $minifier->add($path);
+                }
+
+                $minifier->minify($filePath);
+
+                if (is_file($filePath)) {
+                    $this->addMinifiedJs($doc, $fileUrl);
+                } else {
+                    $app->enqueueMessage('Error create minified js file' . $fileUrl);
+                }
+            }
+        }
+
+        if (count($minifierUrls['css'])) {
+            $filename = md5(implode(',', $minifierUrls['css'])) . '.css';
+            $filePath = $this->minifiedPath . '/' . $filename;
+            $fileUrl = $this->minifiedUrl . '/' . $filename;
+
+            if (is_file($filePath)) {
+                $this->addMinifiedCss($doc, $fileUrl);
+            } else {
+                $minifier = new Minify\CSS();
+                foreach ($minifierUrls['css'] as $url) {
+                    $path = $this->preparePath($url);
+                    if ($path === false) {
+                        $app->enqueueMessage('Error converting url ' . $url . ' to filepath.', 'error');
+                        continue;
+                    }
+                    $minifier->add($path);
+                }
+
+                $minifier->minify($filePath);
+
+                if (is_file($filePath)) {
+                    $this->addMinifiedCss($doc, $fileUrl);
+                } else {
+                    $app->enqueueMessage('Error create minified css file' . $fileUrl);
+                }
+            }
+        }
+    }
+
+    private function addMinifiedCss(&$doc, $fileUrl)
+    {
+        if ($this->params->get('minify_css_position', 'head') == 'head') {
+            $doc->_styleSheets[$fileUrl] = array(
+                "mime" => "text/cs",
+                "media" => null,
+                "attribs" => array()
+            );
+        } else {
+            $this->footherCss[$fileUrl] = array(
+                "mime" => "text/cs",
+                "media" => null,
+                "attribs" => array()
+            );
+        }
+    }
+
+    private function addMinifiedJs(&$doc, $fileUrl)
+    {
+        if ($this->params->get('minify_js_position', 'head') == 'head') {
+            $doc->_scripts[$fileUrl] = array(
+                "mime" => "text/javascript",
+                "defer" => false,
+                "async" => false
+            );
+        } else {
+            $this->footherScripts[$fileUrl] = array(
+                "mime" => "text/javascript",
+                "defer" => false,
+                "async" => false
+            );
+        }
+    }
+
+    private function preparePath($url)
+    {
+        $siteRoot = JUri::root();
+        if ((StringHelper1::strpos($url, 'http') === 0 && StringHelper1::strpos($url, $siteRoot) === false)
+            || StringHelper1::strpos($url, '//') === 0
+        ) {
+            return false;
+        }
+        if (StringHelper1::strpos($url, $siteRoot) === false) {
+            $url = StringHelper1::strpos($url, '/') === 0 ? $siteRoot . StringHelper1::substr($url, 1) : $siteRoot . $url;
+        }
+        $parts = parse_url($url);
+        if (empty($parts["path"])) {
+            return false;
+        }
+        if (!is_file(JPATH_ROOT . $parts["path"])) {
+            return false;
+        }
+        return JPATH_ROOT . $parts["path"];
     }
 
     public function onAfterRender()
@@ -212,13 +356,14 @@ class plgSystemJsCssManipulate extends JPlugin
         return $config;
     }
 
-    private function checkExceptions($removeExceptions, $debug, &$debugInfo){
+    private function checkExceptions($removeExceptions, $debug, &$debugInfo)
+    {
         $removeExceptions = trim($removeExceptions);
-        if(empty($removeExceptions)){
+        if (empty($removeExceptions)) {
             return false;
         }
         $removeExceptions = explode('&', $removeExceptions);
-        if(!count($removeExceptions)){
+        if (!count($removeExceptions)) {
             return false;
         }
 
@@ -226,7 +371,7 @@ class plgSystemJsCssManipulate extends JPlugin
         $aCheck = array();
         foreach ($removeExceptions as $removeException) {
             $removeException = explode('=', $removeException);
-            if(empty($removeException[1])){
+            if (empty($removeException[1])) {
                 return false;
             }
             $values = explode(',', $removeException[1]);
@@ -235,7 +380,7 @@ class plgSystemJsCssManipulate extends JPlugin
 
         $exception = !in_array(0, $aCheck);
 
-        if($exception){
+        if ($exception) {
             $debug && $debugInfo .= '<span class="label label-primary">EXCEPTION</span>';
         }
 

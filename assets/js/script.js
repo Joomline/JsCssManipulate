@@ -14,8 +14,11 @@ function addScriptRow(){
         '<td align="center"><input name="jform[params][scripts]['+count+'][path]" value="" type="text" style="width: 400px;"></td>' +
         '<td align="center"><input name="jform[params][scripts]['+count+'][defer]" value="1" type="checkbox"></td>' +
         '<td align="center"><input name="jform[params][scripts]['+count+'][async]" value="1" type="checkbox"></td>' +
-        '<td align="center"><input name="jform[params][scripts]['+count+'][foother]" value="1" type="checkbox"></td>' +
-        '<td align="center"><input name="jform[params][scripts]['+count+'][remove]" value="1" type="checkbox">' +
+        '<td align="center"><input name="jform[params][scripts]['+count+'][foother]" value="1" type="checkbox"></td>' ;
+    if(enableJsMinify){
+        newRow += '<td align="center"><input name="jform[params][scripts]['+count+'][minify]" value="1" type="checkbox">';
+    }
+    newRow += '<td align="center"><input name="jform[params][scripts]['+count+'][remove]" value="1" type="checkbox">' +
         '<input name="jform[params][scripts]['+count+'][remove_exceptions]" value="" type="text"></td>' +
         '<td align="center"><input class="btn btn-danger btn-small" value="X" onclick="removeRow(this);" type="button"></td>' +
         '</tr>';
@@ -28,8 +31,11 @@ function addStylesheetRow(){
     var count = parseInt(countInput.val())+1;
     var newRow = '<tr>' +
         '<td align="center"><input name="jform[params][css]['+count+'][path]" value="" type="text" style="width: 400px;"></td>' +
-        '<td align="center"><input name="jform[params][css]['+count+'][foother]" value="1" type="checkbox"></td>' +
-        '<td align="center"><input name="jform[params][css]['+count+'][remove]" value="1" type="checkbox">' +
+        '<td align="center"><input name="jform[params][css]['+count+'][foother]" value="1" type="checkbox"></td>' ;
+    if(enableJsMinify){
+        newRow += '<td align="center"><input name="jform[params][css]['+count+'][minify]" value="1" type="checkbox">';
+    }
+    newRow += '<td align="center"><input name="jform[params][css]['+count+'][remove]" value="1" type="checkbox">' +
         '<input name="jform[params][css]['+count+'][remove_exceptions]" value="" type="text"></td>' +
         '<td align="center"><input class="btn btn-danger btn-small" value="X" onclick="removeRow(this);" type="button"></td>' +
         '</tr>';

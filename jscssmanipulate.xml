@@ -13,8 +13,9 @@
 	<files>
 		<filename plugin="jscssmanipulate">jscssmanipulate.php</filename>
 		<folder>assets</folder>
-		<folder>language</folder>
 		<folder>elements</folder>
+		<folder>language</folder>
+		<folder>lib</folder>
 	</files>
 	<config addfieldpath="/plugins/system/jscssmanipulate/elements">
 		<fields name="params">
@@ -43,6 +44,41 @@
 						description="PLG_JSCSSMANIPULATE_CSS_DESC"
 				/>
 
+			</fieldset>
+			<fieldset name="advanced">
+				<field
+						name="minify"
+						type="radio"
+						default="0"
+						label="PLG_JSCSSMANIPULATE_ENABLE_MINIFY"
+						description="PLG_JSCSSMANIPULATE_ENABLE_MINIFY_DESC"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field
+						name="minify_js_position"
+						type="radio"
+						default="head"
+						label="PLG_JSCSSMANIPULATE_MINIFY_JS_POSITION"
+						description="PLG_JSCSSMANIPULATE_MINIFY_JS_POSITION_DESC"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="head">PLG_JSCSSMANIPULATE_HEAD</option>
+					<option value="bottom">PLG_JSCSSMANIPULATE_BOTTOM</option>
+				</field>
+				<field
+						name="minify_css_position"
+						type="radio"
+						default="head"
+						label="PLG_JSCSSMANIPULATE_MINIFY_CSS_POSITION"
+						description="PLG_JSCSSMANIPULATE_MINIFY_CSS_POSITION_DESC"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="head">PLG_JSCSSMANIPULATE_HEAD</option>
+					<option value="bottom">PLG_JSCSSMANIPULATE_BOTTOM</option>
+				</field>
 			</fieldset>
 		</fields>
 	</config>
