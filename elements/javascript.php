@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * jscssmanipulate
+ *
+ * @version 	1.0.0
+ * @author		Arkadiy Sedelnikov, Joomline
+ * @copyright	© 2017. All rights reserved.
+ * @license 	GNU/GPL v.2 or later.
+ */
+
 defined('JPATH_BASE') or die();
 use Joomla\Registry\Registry as JRegistry;
 
