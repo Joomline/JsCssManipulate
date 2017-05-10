@@ -8,7 +8,7 @@
 	<authorUrl>argens.ru</authorUrl>
 	<creationDate>19-04-2017</creationDate>
 	<copyright>2017 Arkadiy Sedelnikov</copyright>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<description>PLG_JSCSSMANIPULATE_DESCRIPTION</description>
 	<files>
 		<filename plugin="jscssmanipulate">jscssmanipulate.php</filename>
