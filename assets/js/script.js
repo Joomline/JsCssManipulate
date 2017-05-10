@@ -25,6 +25,7 @@ function addScriptRow(){
     countInput.val(count);
     tbody.append(newRow);
 }
+
 function addStylesheetRow(){
     var tbody = jQuery('#jscssmanipulate-css-tbody');
     var countInput = jQuery('#jscssmanipulate-css-count');
@@ -37,6 +38,19 @@ function addStylesheetRow(){
     }
     newRow += '<td align="center"><input name="jform[params][css]['+count+'][remove]" value="1" type="checkbox">' +
         '<input name="jform[params][css]['+count+'][remove_exceptions]" value="" type="text"></td>' +
+        '<td align="center"><input class="btn btn-danger btn-small" value="X" onclick="removeRow(this);" type="button"></td>' +
+        '</tr>';
+    countInput.val(count);
+    tbody.append(newRow);
+}
+
+function addSasslessRow(){
+    var tbody = jQuery('#jscssmanipulate-sassless-tbody');
+    var countInput = jQuery('#jscssmanipulate-sassless-count');
+    var count = parseInt(countInput.val())+1;
+    var newRow = '<tr>' +
+        '<td align="center"><input name="jform[params][sassless]['+count+'][path]" value="" type="text" style="width: 400px;"></td>' +
+        '<td align="center"><input name="jform[params][sassless]['+count+'][css_path]" value="" type="text" style="width: 400px;"></td>' +
         '<td align="center"><input class="btn btn-danger btn-small" value="X" onclick="removeRow(this);" type="button"></td>' +
         '</tr>';
     countInput.val(count);

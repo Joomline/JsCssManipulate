@@ -137,6 +137,45 @@ class plgSystemJsCssManipulate extends JPlugin
             $debug && $debugInfo .= '</ul>';
         }
 
+        if (count($config['sassless'])) {
+
+            $debug && $debugInfo .= '<ul><h3>' . JText::_('PLG_JSCSSMANIPULATE_SASSLESS') . ':</h3>';
+
+
+            foreach ($config['sassless'] as $from => $to)
+            {
+                $fromPath = $this->getFullFilePath($from);
+                if(is_file($fromPath)){
+                    $fileInfo = stat($fromPath);
+                    $fromFileTime = $fileInfo['mtime'];
+
+                    $toPath =  $this->getFullFilePath($to);
+                    $compile = true;
+
+                    if(is_file($toPath)){
+                        $fileInfo = stat($toPath);
+                        $toFileTime = $fileInfo['mtime'];
+                        if($fromFileTime < $toFileTime){
+                            $compile = false;
+                        }
+                    }
+
+                    if($compile){
+                        $ext = JFile::getExt($fromPath);
+                        $this->compileSassLess($ext, $fromPath, $toPath, $debug, $debugInfo);
+                    }
+                    else{
+                        $debug && $debugInfo .= '<li>' . $fromPath . ' <span class="label label-important">NOT CHANGED</span></li>';
+                    }
+                }
+                else{
+                    $debug && $debugInfo .= '<li>' . $toPath . ' <span class="label label-inverse">does not exist</span></li>';
+                }
+            }
+
+            $debug && $debugInfo .= '</ul>';
+        }
+
         if (count($minifierUrls['js']) || count($minifierUrls['css'])) {
             $this->prepareMinified($doc, $minifierUrls);
         }
@@ -145,6 +184,56 @@ class plgSystemJsCssManipulate extends JPlugin
             $app->enqueueMessage($debugInfo, JText::_('PLG_JSCSSMANIPULATE_DEBUG'));
         }
         return true;
+    }
+
+    private function compileSassLess($ext, $fromPath, $toPath, $debug, &$debugInfo){
+        jimport('joomla.filesystem.file');
+        if($ext == 'less'){
+            require_once __DIR__.'/lib/lessphp/lessc.inc.php';
+            $less = new lessc;
+            try{
+                $css = $less->compileFile($fromPath);
+            }
+            catch (Exception $e){
+                $debug && $debugInfo .= '<li>' . $fromPath . ' <span class="label label-inverse">' . $e->getMessage() . '</span></li>';
+                return;
+            }
+            if(!JFile::write($toPath, $css)){
+                $debug && $debugInfo .= '<li>' . $toPath . ' <span class="label label-inverse">error writing file</span></li>';
+            }
+            else{
+                $debug && $debugInfo .= '<li>' . $fromPath . ' => ' . $toPath . ' <span class="label label-danger">COMPILED</span></li>';
+            }
+        }
+        else{
+            require_once __DIR__.'/lib/scssphp/scss.inc.php';
+            $scssc = new scssc;
+            $content = file_get_contents($fromPath);
+            try{
+                $css = $scssc->compile($content);
+            }
+            catch (Exception $e){
+                $debug && $debugInfo .= '<li>' . $fromPath . ' <span class="label label-inverse">' . $e->getMessage() . '</span></li>';
+                return;
+            }
+            if(!JFile::write($toPath, $css)){
+                $debug && $debugInfo .= '<li>' . $toPath . ' <span class="label label-inverse">error writing file</span></li>';
+            }
+            else{
+                $debug && $debugInfo .= '<li>' . $fromPath . ' => ' . $toPath . ' <span class="label label-danger">COMPILED</span></li>';
+            }
+        }
+    }
+
+    private function getFullFilePath($path){
+        $filePath =  StringHelper1::trim($path);
+        if(StringHelper1::strpos($filePath, DIRECTORY_SEPARATOR) !== 0){
+            $filePath = JPATH_ROOT . DIRECTORY_SEPARATOR . $filePath;
+        }
+        else{
+            $filePath = JPATH_ROOT . $filePath;
+        }
+        return $filePath;
     }
 
     private function prepareMinified(&$doc, $minifierUrls)
@@ -333,11 +422,13 @@ class plgSystemJsCssManipulate extends JPlugin
 
     private function prepareConfig()
     {
-        $config = array('scripts' => array(), 'css' => array());
+        $config = array('scripts' => array(), 'css' => array(), 'sassless' => array());
         $scripts = $this->params->get('scripts', '');
         $css = $this->params->get('css', '');
+        $sassless = $this->params->get('sassless', '');
         $scripts = is_object($scripts) ? (array)$scripts : $scripts;
         $css = is_object($css) ? (array)$css : $css;
+        $sassless = is_object($sassless) ? (array)$sassless : $sassless;
 
         if (is_array($scripts) && count($scripts)) {
             foreach ($scripts as $script) {
@@ -350,6 +441,14 @@ class plgSystemJsCssManipulate extends JPlugin
             foreach ($css as $cs) {
                 if (!empty($cs->path))
                     $config['css'][$cs->path] = $cs;
+            }
+        }
+
+        if (is_array($sassless) && count($sassless)) {
+
+            foreach ($sassless as $sl) {
+                if (!empty($sl->path))
+                    $config['sassless'][$sl->path] = $sl->css_path;
             }
         }
 
