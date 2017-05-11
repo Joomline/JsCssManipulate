@@ -213,7 +213,7 @@ class plgSystemJsCssManipulate extends JPlugin
                 $debug && $debugInfo .= '<li>' . $fromPath . ' => ' . $toPath . ' <span class="label label-danger">COMPILED</span></li>';
             }
         }
-        else{
+        else if($ext == 'scss' || $ext == 'sass'){
             require_once __DIR__.'/lib/scssphp/scss.inc.php';
             $scssc = new scssc;
             $content = file_get_contents($fromPath);
@@ -230,6 +230,9 @@ class plgSystemJsCssManipulate extends JPlugin
             else{
                 $debug && $debugInfo .= '<li>' . $fromPath . ' => ' . $toPath . ' <span class="label label-danger">COMPILED</span></li>';
             }
+        }
+        else{
+            $debug && $debugInfo .= '<li>' . $toPath . ' <span class="label label-inverse">File *.'.$ext.' not handled</span></li>';
         }
     }
 
