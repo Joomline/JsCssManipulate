@@ -55,6 +55,7 @@ class plgSystemJsCssManipulate extends JPlugin
 
         $debug = $this->params->get('debug', '0');
         $minify = $this->params->get('minify', 0);
+        $cutScript = $this->params->get('cut_script', '');
         $minifierUrls = array('js' => array(), 'css' => array());
 
         if ($minify) {
@@ -186,6 +187,20 @@ class plgSystemJsCssManipulate extends JPlugin
 
         if (count($minifierUrls['js']) || count($minifierUrls['css'])) {
             $this->prepareMinified($doc, $minifierUrls);
+        }
+
+        if (!empty($cutScript)) {
+            $cutScript = explode("\n", $cutScript);
+            $cutScript = array_map("trim", $cutScript);
+            foreach ($cutScript as $k => $v){
+                if(empty($v)){
+                    unset($cutScript[$k]);
+                }
+            }
+
+            if(count($cutScript)){
+                $doc->_script['text/javascript'] = preg_replace($cutScript, '', $doc->_script['text/javascript']);
+            }
         }
 
         if ($debug) {

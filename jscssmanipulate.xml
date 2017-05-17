@@ -39,6 +39,14 @@
 						label="PLG_JSCSSMANIPULATE_SASSLESS"
 						description="PLG_JSCSSMANIPULATE_SASSLESS_DESC"
 				/>
+				<field
+						name="cut_script"
+						type="textarea"
+						cols="500"
+						rows="10"
+						label="PLG_JSCSSMANIPULATE_SCRIPT"
+						description="PLG_JSCSSMANIPULATE_SCRIPT_DESC"
+				/>
 
 			</fieldset>
 			<fieldset name="advanced">
