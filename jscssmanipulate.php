@@ -199,7 +199,13 @@ class plgSystemJsCssManipulate extends JPlugin
             }
 
             if(count($cutScript)){
+                $debug && $debugInfo .= '<ul><h3>' . JText::_('PLG_JSCSSMANIPULATE_SCRIPT') . ':</h3>';
+                $debug && $debugInfo .= '<li><h4>' . JText::_('PLG_JSCSSMANIPULATE_SCRIPT_BEFORE') . ':</h4>
+                    <pre>'.print_r($doc->_script['text/javascript'], true).'</pre></li>';
                 $doc->_script['text/javascript'] = preg_replace($cutScript, '', $doc->_script['text/javascript']);
+                $debug && $debugInfo .= '<li><h4>' . JText::_('PLG_JSCSSMANIPULATE_SCRIPT_AFTER') . ':</h4>
+                    <pre>'.print_r($doc->_script['text/javascript'], true).'</pre></li>';
+                $debug && $debugInfo .= '</ul>';
             }
         }
 
