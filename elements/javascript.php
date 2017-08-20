@@ -21,15 +21,22 @@ class JFormFieldJavascript extends JFormField {
         $enableMinify = $plgParams->get('minify',0);
 
         JHtml::_('jquery.framework');
+		JHtml::_('jquery.ui', array('core', 'sortable'));
         JFactory::getDocument()->addScript(JUri::root().'plugins/system/jscssmanipulate/assets/js/script.js');
         JFactory::getDocument()->addScriptDeclaration('
             var enableJsMinify = '.$enableMinify.';
+            jQuery(function($) {
+                $( ".sortable-javascript" ).sortable();
+            });
         ');
 
 		$value  = $this->value;
 
+
+
 		$html = '<table width="100%">';
 		$html .= '<thead>';
+		$html .= '<th><span class="icon-menu-2"></span></th>';
 		$html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_JAVASCRIPT').'</th>';
 		$html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_DEFER').'</th>';
 		$html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_ASYNC').'</th>';
@@ -40,7 +47,7 @@ class JFormFieldJavascript extends JFormField {
 		$html .= '<th>'.JText::_('PLG_JSCSSMANIPULATE_REMOVE').'</th>';
 		$html .= '<th></th>';
 		$html .= '</thead>';
-		$html .= '<tbody id="jscssmanipulate-js-tbody">';
+		$html .= '<tbody id="jscssmanipulate-js-tbody" class="sortable-javascript">';
 		if(!is_array($value) || !count($value)){
 		    $countValue = 0;
         }
@@ -54,6 +61,12 @@ class JFormFieldJavascript extends JFormField {
 		        $checkedMinify = (!empty($v['minify'])) ? ' checked' : '';
 		        $checkedRemove = (!empty($v['remove'])) ? ' checked' : '';
                 $html .= '<tr>';
+                $html .= '
+				<td align="center">
+                	<span style="cursor: move;" class="sortable-handler">
+					    <span class="icon-menu"></span>
+					</span>
+                </td>';
                 $html .= '<td align="center"><input style="width: 400px;" type="text" name="'.$this->name.'['.$k.'][path]" value="'.$v['path'].'"></td>';
                 $html .= '<td align="center"><input type="checkbox" name="'.$this->name.'['.$k.'][defer]" value="1"'.$checkedDefer.'></td>';
                 $html .= '<td align="center"><input type="checkbox" name="'.$this->name.'['.$k.'][async]" value="1"'.$checkedAsync.'></td>';

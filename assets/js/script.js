@@ -11,6 +11,7 @@ function addScriptRow(){
     var countInput = jQuery('#jscssmanipulate-js-count');
     var count = parseInt(countInput.val())+1;
     var newRow = '<tr>' +
+        '<td align="center"><span style="cursor: move;" class="sortable-handler"><span class="icon-menu"></span></span></td>'+
         '<td align="center"><input name="jform[params][scripts]['+count+'][path]" value="" type="text" style="width: 400px;"></td>' +
         '<td align="center"><input name="jform[params][scripts]['+count+'][defer]" value="1" type="checkbox"></td>' +
         '<td align="center"><input name="jform[params][scripts]['+count+'][async]" value="1" type="checkbox"></td>' +
@@ -23,7 +24,7 @@ function addScriptRow(){
         '<td align="center"><input class="btn btn-danger btn-small" value="X" onclick="removeRow(this);" type="button"></td>' +
         '</tr>';
     countInput.val(count);
-    tbody.append(newRow);
+    tbody.append(newRow).sortable();
 }
 
 function addStylesheetRow(){
@@ -31,6 +32,7 @@ function addStylesheetRow(){
     var countInput = jQuery('#jscssmanipulate-css-count');
     var count = parseInt(countInput.val())+1;
     var newRow = '<tr>' +
+        '<td align="center"><span style="cursor: move;" class="sortable-handler"><span class="icon-menu"></span></span></td>'+
         '<td align="center"><input name="jform[params][css]['+count+'][path]" value="" type="text" style="width: 400px;"></td>' +
         '<td align="center"><input name="jform[params][css]['+count+'][foother]" value="1" type="checkbox"></td>' ;
     if(enableJsMinify){
@@ -41,7 +43,7 @@ function addStylesheetRow(){
         '<td align="center"><input class="btn btn-danger btn-small" value="X" onclick="removeRow(this);" type="button"></td>' +
         '</tr>';
     countInput.val(count);
-    tbody.append(newRow);
+    tbody.append(newRow).sortable();
 }
 
 function addSasslessRow(){

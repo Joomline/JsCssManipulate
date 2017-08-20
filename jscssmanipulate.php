@@ -31,6 +31,7 @@ jimport('joomla.filesystem.folder');
 class plgSystemJsCssManipulate extends JPlugin
 {
     private $footherScripts, $footherCss, $minifiedPath, $minifiedUrl;
+	private static $config;
 
     function __construct($subject, array $config = array())
     {
@@ -398,19 +399,33 @@ class plgSystemJsCssManipulate extends JPlugin
             $html = '';
 
             if (is_array($this->footherCss) && count($this->footherCss)) {
+
+	            if($this->params->get('enable_foother_css_ordering',0)){
+		            $config = $this->prepareConfig();
+		            if(is_array($config['css']) && count($config['css'])){
+			            $aNewCss = array();
+			            foreach ($config['css'] as $key => $css){
+				            if(isset($this->footherCss[$key])){
+					            $aNewCss[$key] = $this->footherCss[$key];
+				            }
+			            }
+			            $this->footherCss = $aNewCss;
+		            }
+	            }
+
                 $defaultCssMimes = array('text/css');
                 foreach ($this->footherCss as $strSrc => $strAttr) {
                     $html .= '<link href="' . $strSrc . '" rel="stylesheet"';
 
-                    if (!is_null($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultCssMimes))) {
+                    if (!empty($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultCssMimes))) {
                         $html .= ' type="' . $strAttr['mime'] . '"';
                     }
 
-                    if (!is_null($strAttr['media'])) {
+                    if (!empty($strAttr['media'])) {
                         $html .= ' media="' . $strAttr['media'] . '"';
                     }
 
-                    if (is_array($strAttr['attribs'])) {
+                    if (isset($strAttr['attribs']) && is_array($strAttr['attribs'])) {
                         if ($temp = ArrayHelper::toString($strAttr['attribs'])) {
                             $html .= ' ' . $temp;
                         }
@@ -422,18 +437,32 @@ class plgSystemJsCssManipulate extends JPlugin
             }
 
             if (is_array($this->footherScripts) && count($this->footherScripts)) {
+
+            	if($this->params->get('enable_foother_scripts_ordering',0)){
+		            $config = $this->prepareConfig();
+		            if(is_array($config['scripts']) && count($config['scripts'])){
+		            	$aNewScripts = array();
+			            foreach ($config['scripts'] as $scriptKey => $script){
+							if(isset($this->footherScripts[$scriptKey])){
+								$aNewScripts[$scriptKey] = $this->footherScripts[$scriptKey];
+							}
+			            }
+			            $this->footherScripts = $aNewScripts;
+		            }
+	            }
+
                 foreach ($this->footherScripts as $strSrc => $strAttr) {
                     $html .= '<script src="' . $strSrc . '"';
-                    if (!is_null($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultJsMimes))) {
+                    if (!empty($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultJsMimes))) {
                         $html .= ' type="' . $strAttr['mime'] . '"';
                     }
-                    if ($strAttr['defer']) {
+                    if (!empty($strAttr['defer'])) {
                         $html .= ' defer';
                         if (!$document->isHtml5()) {
                             $html .= '="defer"';
                         }
                     }
-                    if ($strAttr['async']) {
+                    if (!empty($strAttr['async'])) {
                         $html .= ' async';
                         if (!$document->isHtml5()) {
                             $html .= '="async"';
@@ -456,37 +485,40 @@ class plgSystemJsCssManipulate extends JPlugin
 
     private function prepareConfig()
     {
-        $config = array('scripts' => array(), 'css' => array(), 'sassless' => array());
-        $scripts = $this->params->get('scripts', '');
-        $css = $this->params->get('css', '');
-        $sassless = $this->params->get('sassless', '');
-        $scripts = is_object($scripts) ? (array)$scripts : $scripts;
-        $css = is_object($css) ? (array)$css : $css;
-        $sassless = is_object($sassless) ? (array)$sassless : $sassless;
+    	if(!is_array(self::$config))
+    	{
+		    self::$config = array('scripts' => array(), 'css' => array(), 'sassless' => array());
+		    $scripts = $this->params->get('scripts', '');
+		    $css = $this->params->get('css', '');
+		    $sassless = $this->params->get('sassless', '');
+		    $scripts = is_object($scripts) ? (array)$scripts : $scripts;
+		    $css = is_object($css) ? (array)$css : $css;
+		    $sassless = is_object($sassless) ? (array)$sassless : $sassless;
 
-        if (is_array($scripts) && count($scripts)) {
-            foreach ($scripts as $script) {
-                if (!empty($script->path))
-                    $config['scripts'][$script->path] = $script;
-            }
-        }
+		    if (is_array($scripts) && count($scripts)) {
+			    foreach ($scripts as $script) {
+				    if (!empty($script->path))
+					    self::$config['scripts'][$script->path] = $script;
+			    }
+		    }
 
-        if (is_array($css) && count($css)) {
-            foreach ($css as $cs) {
-                if (!empty($cs->path))
-                    $config['css'][$cs->path] = $cs;
-            }
-        }
+		    if (is_array($css) && count($css)) {
+			    foreach ($css as $cs) {
+				    if (!empty($cs->path))
+					    self::$config['css'][$cs->path] = $cs;
+			    }
+		    }
 
-        if (is_array($sassless) && count($sassless)) {
+		    if (is_array($sassless) && count($sassless)) {
 
-            foreach ($sassless as $sl) {
-                if (!empty($sl->path))
-                    $config['sassless'][$sl->path] = $sl->css_path;
-            }
-        }
+			    foreach ($sassless as $sl) {
+				    if (!empty($sl->path))
+					    self::$config['sassless'][$sl->path] = $sl->css_path;
+			    }
+		    }
+	    }
 
-        return $config;
+        return self::$config;
     }
 
     private function checkExceptions($removeExceptions, $debug, &$debugInfo)
