@@ -16,6 +16,7 @@ class JFormFieldJavascript extends JFormField {
 
 	public function getInput()	{
 
+		$isEnabled = JPluginHelper::isEnabled('system', 'jscssmanipulate');
         $plugin = JPluginHelper::getPlugin('system', 'jscssmanipulate');
         $plgParams = new JRegistry($plugin->params);
         $enableMinify = $plgParams->get('minify',0);
