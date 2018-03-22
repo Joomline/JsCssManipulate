@@ -333,16 +333,14 @@ class plgSystemJsCssManipulate extends JPlugin
     private function addMinifiedCss(&$doc, $fileUrl)
     {
         if ($this->params->get('minify_css_position', 'head') == 'head') {
-            $doc->_styleSheets[$fileUrl] = array(
-                "mime" => "text/css",
-                "media" => null,
-                "attribs" => array()
-            );
+            $doc->_styleSheets[$fileUrl] = array (
+            "type" => "text/css",
+	        "options" => array()
+	        );
         } else {
             $this->footherCss[$fileUrl] = array(
-                "mime" => "text/css",
-                "media" => null,
-                "attribs" => array()
+	            "type" => "text/css",
+	            "options" => array()
             );
         }
     }
