@@ -340,7 +340,7 @@ class plgSystemJsCssManipulate extends JPlugin
             );
         } else {
             $this->footherCss[$fileUrl] = array(
-                "mime" => "text/cs",
+                "mime" => "text/css",
                 "media" => null,
                 "attribs" => array()
             );
