@@ -334,7 +334,7 @@ class plgSystemJsCssManipulate extends JPlugin
     {
         if ($this->params->get('minify_css_position', 'head') == 'head') {
             $doc->_styleSheets[$fileUrl] = array(
-                "mime" => "text/cs",
+                "mime" => "text/css",
                 "media" => null,
                 "attribs" => array()
             );
