@@ -73,6 +73,14 @@ class plgSystemJsCssManipulate extends JPlugin
         $debugInfo = '';
 
         if (count($config['scripts'])) {
+            $keysScripts = array_keys($config['scripts']);
+            $tmp = [];
+            foreach ($keysScripts as $key) {
+                $tmp[trim($key)] = $config['scripts'][$key];
+                $tmp[trim($key)]->path = trim($key);
+            }
+            $config['scripts'] = $tmp;
+            unset($tmp, $keysScripts);
 
             $debug && $debugInfo .= '<ul><h3>' . JText::_('PLG_JSCSSMANIPULATE_SCRIPTS') . ':</h3>';
 
@@ -86,7 +94,7 @@ class plgSystemJsCssManipulate extends JPlugin
                     if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
                         $debug && $debugInfo .= '<span class="label label-warning">REMOVED</span>';
                         unset($doc->_scripts[$searchUrl]);
-                    } else if ($minify && $params->minify) {
+                    } else if ($minify && (isset($params->minify) && $params->minify)) {
                         $minifierUrls['js'][] = $searchUrl;
                         $debug && $debugInfo .= '<span class="label label-inverse">MINIFIED</span>';
                         unset($doc->_scripts[$searchUrl]);
@@ -116,6 +124,14 @@ class plgSystemJsCssManipulate extends JPlugin
         }
 
         if (count($config['css'])) {
+            $keysStyles = array_keys($config['css']);
+            $tmp = [];
+            foreach ($keysStyles as $key) {
+                $tmp[trim($key)] = $config['css'][$key];
+                $tmp[trim($key)]->path = trim($key);
+            }
+            $config['css'] = $tmp;
+            unset($tmp, $keysStyles);
 
             $debug && $debugInfo .= '<ul><h3>' . JText::_('PLG_JSCSSMANIPULATE_CSS') . ':</h3>';
 
@@ -129,7 +145,7 @@ class plgSystemJsCssManipulate extends JPlugin
                     if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
                         $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
                         unset($doc->_styleSheets[$searchUrl]);
-                    } else if ($minify && $params->minify) {
+                    } else if ($minify && (isset($params->minify) && $params->minify)) {
                         $minifierUrls['css'][] = $searchUrl;
                         $debug && $debugInfo .= '<span class="label label-inverse">MINIFIED</span>';
                         unset($doc->_styleSheets[$searchUrl]);
@@ -391,6 +407,7 @@ class plgSystemJsCssManipulate extends JPlugin
 
         $app = JFactory::getApplication();
         $document = JFactory::getDocument();
+	$mediaVersion = '?' . $document->getMediaVersion();
         $buffer = $app->getBody();
         if ($buffer !== null) {
             $defaultJsMimes = array('text/javascript', 'application/javascript', 'text/x-javascript', 'application/x-javascript');
@@ -413,7 +430,8 @@ class plgSystemJsCssManipulate extends JPlugin
 
                 $defaultCssMimes = array('text/css');
                 foreach ($this->footherCss as $strSrc => $strAttr) {
-                    $html .= '<link href="' . $strSrc . '" rel="stylesheet"';
+                    $mediaVersion = (isset($strAttr['options']['version']) && $strAttr['options']['version'] && strpos($strSrc, '?') === false && ('?' . $document->getMediaVersion() || $strAttr['options']['version'] !== 'auto')) ? '?' . $document->getMediaVersion() : '';
+		    $html .= '<link href="' . $strSrc . $mediaVersion . '" rel="stylesheet"';
 
                     if (!empty($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultCssMimes))) {
                         $html .= ' type="' . $strAttr['mime'] . '"';
@@ -450,7 +468,8 @@ class plgSystemJsCssManipulate extends JPlugin
 	            }
 
                 foreach ($this->footherScripts as $strSrc => $strAttr) {
-                    $html .= '<script src="' . $strSrc . '"';
+		    $mediaVersion = (isset($strAttr['options']['version']) && $strAttr['options']['version'] && strpos($strSrc, '?') === false && ('?' . $document->getMediaVersion() || $strAttr['options']['version'] !== 'auto')) ? '?' . $document->getMediaVersion() : '';
+                    $html .= '<script src="' . $strSrc . $mediaVersion . '"';
                     if (!empty($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultJsMimes))) {
                         $html .= ' type="' . $strAttr['mime'] . '"';
                     }
