@@ -116,6 +116,17 @@
 					<option value="head">PLG_JSCSSMANIPULATE_HEAD</option>
 					<option value="bottom">PLG_JSCSSMANIPULATE_BOTTOM</option>
 				</field>
+				<field
+						name="ignore_hash"
+						type="radio"
+						default="0"
+						label="PLG_JSCSSMANIPULATE_IGNORE_HASH"
+						description="PLG_JSCSSMANIPULATE_IGNORE_HASH_DESC"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
 			</fieldset>
 		</fields>
 	</config>
