@@ -8,12 +8,25 @@
  * @license 	GNU/GPL v.2 or later.
  */
 defined('_JEXEC') or die('Restricted access');
-use Joomla\Utilities\ArrayHelper,
-    Joomla\CMS\Filesystem\File,
-    \Joomla\CMS\Filesystem\Folder,
-    MatthiasMullie\Minify,
-    \Joomla\String\StringHelper
-    ;
+use Joomla\Utilities\ArrayHelper;
+use MatthiasMullie\Minify;
+
+if (version_compare(JVERSION, '3.5.0', 'ge')) {
+    if (!class_exists('StringHelper1')) {
+        class StringHelper1 extends \Joomla\String\StringHelper
+        {
+        }
+    }
+} else {
+    if (!class_exists('StringHelper1')) {
+        jimport('joomla.string.string');
+
+        class StringHelper1 extends JString
+        {
+        }
+    }
+}
+jimport('joomla.filesystem.folder');
 
 class plgSystemJsCssManipulate extends JPlugin
 {
@@ -26,7 +39,7 @@ class plgSystemJsCssManipulate extends JPlugin
         $this->minifiedPath = JPATH_ROOT . '/cache/plg_system_jscssmanipulate';
         $this->minifiedUrl = JUri::root() . 'cache/plg_system_jscssmanipulate';
         if (!is_dir($this->minifiedPath)) {
-            Folder::create($this->minifiedPath);
+            JFolder::create($this->minifiedPath);
         }
     }
 
@@ -43,7 +56,6 @@ class plgSystemJsCssManipulate extends JPlugin
 
         $debug = $this->params->get('debug', '0');
         $minify = $this->params->get('minify', 0);
-        $ignore_hash = $this->params->get('ignore_hash', 0);
         $cutScript = $this->params->get('cut_script', '');
         $minifierUrls = array('js' => array(), 'css' => array());
 
@@ -61,40 +73,20 @@ class plgSystemJsCssManipulate extends JPlugin
         $debugInfo = '';
 
         if (count($config['scripts'])) {
-            $keysScripts = array_keys($config['scripts']);
-            $tmp = [];
-            foreach ($keysScripts as $key) {
-                $tmp[trim($key)] = $config['scripts'][$key];
-                $tmp[trim($key)]->path = trim($key);
-            }
-            $config['scripts'] = $tmp;
-            unset($tmp, $keysScripts);
 
             $debug && $debugInfo .= '<ul><h3>' . JText::_('PLG_JSCSSMANIPULATE_SCRIPTS') . ':</h3>';
 
             $this->footherScripts = array();
             foreach ($doc->_scripts as $searchUrl => $scriptparams) {
-                $noHashUrl = '';
-                if($ignore_hash){
-                    $parts = explode('?', $searchUrl);
-                    if(isset($config['scripts'][$parts[0]])){
-                        $noHashUrl = $parts[0];
-                    }
-                }
-                if (isset($config['scripts'][$searchUrl]) || $noHashUrl) {
-                    if($noHashUrl){
-                        $params = $config['scripts'][$noHashUrl];
-                    }
-                    else{
-                        $params = $config['scripts'][$searchUrl];
-                    }
+                if (isset($config['scripts'][$searchUrl])) {
+                    $params = $config['scripts'][$searchUrl];
 
                     $debug && $debugInfo .= '<li>' . $searchUrl . ' ==> ';
 
                     if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
                         $debug && $debugInfo .= '<span class="label label-warning">REMOVED</span>';
                         unset($doc->_scripts[$searchUrl]);
-                    } else if ($minify && (isset($params->minify) && $params->minify)) {
+                    } else if ($minify && $params->minify) {
                         $minifierUrls['js'][] = $searchUrl;
                         $debug && $debugInfo .= '<span class="label label-inverse">MINIFIED</span>';
                         unset($doc->_scripts[$searchUrl]);
@@ -124,40 +116,20 @@ class plgSystemJsCssManipulate extends JPlugin
         }
 
         if (count($config['css'])) {
-            $keysStyles = array_keys($config['css']);
-            $tmp = [];
-            foreach ($keysStyles as $key) {
-                $tmp[trim($key)] = $config['css'][$key];
-                $tmp[trim($key)]->path = trim($key);
-            }
-            $config['css'] = $tmp;
-            unset($tmp, $keysStyles);
 
             $debug && $debugInfo .= '<ul><h3>' . JText::_('PLG_JSCSSMANIPULATE_CSS') . ':</h3>';
 
             $this->footherCss = array();
             foreach ($doc->_styleSheets as $searchUrl => $scriptparams) {
-                $noHashUrl = '';
-                if($ignore_hash){
-                    $parts = explode('?', $searchUrl);
-                    if(isset($config['scripts'][$parts[0]])){
-                        $noHashUrl = $parts[0];
-                    }
-                }
-                if (isset($config['css'][$searchUrl]) || $noHashUrl) {
-                    if($noHashUrl){
-                        $params = $config['css'][$noHashUrl];
-                    }
-                    else{
-                        $params = $config['css'][$searchUrl];
-                    }
+                if (isset($config['css'][$searchUrl])) {
+                    $params = $config['css'][$searchUrl];
 
                     $debug && $debugInfo .= '<li>' . $searchUrl . ' ==> ';
 
                     if (!empty($params->remove) && !$this->checkExceptions($params->remove_exceptions, $debug, $debugInfo)) {
                         $debug && $debugInfo .= '<span class="label label-danger">REMOVED</span>';
                         unset($doc->_styleSheets[$searchUrl]);
-                    } else if ($minify && (isset($params->minify) && $params->minify)) {
+                    } else if ($minify && $params->minify) {
                         $minifierUrls['css'][] = $searchUrl;
                         $debug && $debugInfo .= '<span class="label label-inverse">MINIFIED</span>';
                         unset($doc->_styleSheets[$searchUrl]);
@@ -183,10 +155,11 @@ class plgSystemJsCssManipulate extends JPlugin
             foreach ($config['sassless'] as $from => $to)
             {
                 $fromPath = $this->getFullFilePath($from);
-                $toPath =  $this->getFullFilePath($to);
                 if(is_file($fromPath)){
                     $fileInfo = stat($fromPath);
                     $fromFileTime = $fileInfo['mtime'];
+
+                    $toPath =  $this->getFullFilePath($to);
                     $compile = true;
 
                     if(is_file($toPath)){
@@ -198,7 +171,7 @@ class plgSystemJsCssManipulate extends JPlugin
                     }
 
                     if($compile){
-                        $ext = File::getExt($fromPath);
+                        $ext = JFile::getExt($fromPath);
                         $this->compileSassLess($ext, $fromPath, $toPath, $debug, $debugInfo);
                     }
                     else{
@@ -245,16 +218,11 @@ class plgSystemJsCssManipulate extends JPlugin
         return true;
     }
 
-    private function compileSassLess($ext, $fromPath, $toPath, $debug, &$debugInfo)
-    {
-        if($ext == 'less')
-        {
-            if(!class_exists('lessc')){
-                require_once __DIR__.'/lib/lessphp/lessc.inc.php';
-            }
-
-            $less = new lessc();
-
+    private function compileSassLess($ext, $fromPath, $toPath, $debug, &$debugInfo){
+        jimport('joomla.filesystem.file');
+        if($ext == 'less'){
+            require_once __DIR__.'/lib/lessphp/lessc.inc.php';
+            $less = new lessc;
             try{
                 $css = $less->compileFile($fromPath);
             }
@@ -262,7 +230,7 @@ class plgSystemJsCssManipulate extends JPlugin
                 $debug && $debugInfo .= '<li>' . $fromPath . ' <span class="label label-inverse">' . $e->getMessage() . '</span></li>';
                 return;
             }
-            if(!File::write($toPath, $css)){
+            if(!JFile::write($toPath, $css)){
                 $debug && $debugInfo .= '<li>' . $toPath . ' <span class="label label-inverse">error writing file</span></li>';
             }
             else{
@@ -280,7 +248,7 @@ class plgSystemJsCssManipulate extends JPlugin
                 $debug && $debugInfo .= '<li>' . $fromPath . ' <span class="label label-inverse">' . $e->getMessage() . '</span></li>';
                 return;
             }
-            if(!File::write($toPath, $css)){
+            if(!JFile::write($toPath, $css)){
                 $debug && $debugInfo .= '<li>' . $toPath . ' <span class="label label-inverse">error writing file</span></li>';
             }
             else{
@@ -293,8 +261,8 @@ class plgSystemJsCssManipulate extends JPlugin
     }
 
     private function getFullFilePath($path){
-        $filePath =  StringHelper::trim($path);
-        if(StringHelper::strpos($filePath, DIRECTORY_SEPARATOR) !== 0){
+        $filePath =  StringHelper1::trim($path);
+        if(StringHelper1::strpos($filePath, DIRECTORY_SEPARATOR) !== 0){
             $filePath = JPATH_ROOT . DIRECTORY_SEPARATOR . $filePath;
         }
         else{
@@ -397,13 +365,13 @@ class plgSystemJsCssManipulate extends JPlugin
     private function preparePath($url)
     {
         $siteRoot = JUri::root();
-        if ((StringHelper::strpos($url, 'http') === 0 && StringHelper::strpos($url, $siteRoot) === false)
-            || StringHelper::strpos($url, '//') === 0
+        if ((StringHelper1::strpos($url, 'http') === 0 && StringHelper1::strpos($url, $siteRoot) === false)
+            || StringHelper1::strpos($url, '//') === 0
         ) {
             return false;
         }
-        if (StringHelper::strpos($url, $siteRoot) === false) {
-            $url = StringHelper::strpos($url, '/') === 0 ? $siteRoot . StringHelper::substr($url, 1) : $siteRoot . $url;
+        if (StringHelper1::strpos($url, $siteRoot) === false) {
+            $url = StringHelper1::strpos($url, '/') === 0 ? $siteRoot . StringHelper1::substr($url, 1) : $siteRoot . $url;
         }
         $parts = parse_url($url);
         if (empty($parts["path"])) {
@@ -423,7 +391,6 @@ class plgSystemJsCssManipulate extends JPlugin
 
         $app = JFactory::getApplication();
         $document = JFactory::getDocument();
-	$mediaVersion = '?' . $document->getMediaVersion();
         $buffer = $app->getBody();
         if ($buffer !== null) {
             $defaultJsMimes = array('text/javascript', 'application/javascript', 'text/x-javascript', 'application/x-javascript');
@@ -446,8 +413,7 @@ class plgSystemJsCssManipulate extends JPlugin
 
                 $defaultCssMimes = array('text/css');
                 foreach ($this->footherCss as $strSrc => $strAttr) {
-                    $mediaVersion = (isset($strAttr['options']['version']) && $strAttr['options']['version'] && strpos($strSrc, '?') === false && ('?' . $document->getMediaVersion() || $strAttr['options']['version'] !== 'auto')) ? '?' . $document->getMediaVersion() : '';
-		    $html .= '<link href="' . $strSrc . $mediaVersion . '" rel="stylesheet"';
+                    $html .= '<link href="' . $strSrc . '" rel="stylesheet"';
 
                     if (!empty($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultCssMimes))) {
                         $html .= ' type="' . $strAttr['mime'] . '"';
@@ -484,8 +450,7 @@ class plgSystemJsCssManipulate extends JPlugin
 	            }
 
                 foreach ($this->footherScripts as $strSrc => $strAttr) {
-		    $mediaVersion = (isset($strAttr['options']['version']) && $strAttr['options']['version'] && strpos($strSrc, '?') === false && ('?' . $document->getMediaVersion() || $strAttr['options']['version'] !== 'auto')) ? '?' . $document->getMediaVersion() : '';
-                    $html .= '<script src="' . $strSrc . $mediaVersion . '"';
+                    $html .= '<script src="' . $strSrc . '"';
                     if (!empty($strAttr['mime']) && (!$document->isHtml5() || !in_array($strAttr['mime'], $defaultJsMimes))) {
                         $html .= ' type="' . $strAttr['mime'] . '"';
                     }
@@ -509,7 +474,7 @@ class plgSystemJsCssManipulate extends JPlugin
 
             if (!empty($html)) {
                 $html .= '</body>';
-                $buffer = StringHelper::str_ireplace('</body>', $html, $buffer, 1);
+                $buffer = StringHelper1::str_ireplace('</body>', $html, $buffer, 1);
             }
 
             $app->setBody($buffer);
