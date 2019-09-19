@@ -119,5 +119,5 @@
 			</fieldset>
 		</fields>
 	</config>
-	<updateservers><server type="extension" priority="1" name="JsCssManipulate">https://joomline.net/update.html?extension_id=8.xml</server></updateservers>
+	<updateservers><server type="extension" priority="1" name="JsCssManipulate">https://joomline.net/update.html?extension_id=9.xml</server></updateservers>
 </extension>
